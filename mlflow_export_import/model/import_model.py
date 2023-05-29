@@ -124,7 +124,8 @@ class BaseModelImporter():
     def _import_model(self,
             model_name,
             input_dir,
-            delete_model = False
+            delete_model = False,
+            experiment_name=None
         ):
         """
         :param model_name: Model name.
@@ -136,13 +137,20 @@ class BaseModelImporter():
         """
         path = os.path.join(input_dir, "model.json")
         model_dct = io_utils.read_file_mlflow(path)["registered_model"]
-
+        # change for only importing specific runs of a model related to an experiment
+        if experiment_name:
+            l_versions = model_dct['versions']
+            l_res_versions = [x for x in l_versions if str(x[_experiment_name]).strip().lower() == experiment_name.strip().lower()]
+            if not l_res_versions:
+                raise Exception(f'No model version found for experiment :`{experiment_name}`')
+            model_dct['versions'] = l_res_versions
         _logger.info("Model to import:")
         _logger.info(f"  Name: {model_dct['name']}")
         _logger.info(f"  Description: {model_dct.get('description','')}")
         _logger.info(f"  Tags: {model_dct.get('tags','')}")
         _logger.info(f"  {len(model_dct['versions'])} versions")
         _logger.info(f"  path: {path}")
+
 
         if not model_name:
             model_name = model_dct["name"]
