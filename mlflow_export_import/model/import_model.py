@@ -139,8 +139,10 @@ class BaseModelImporter():
         model_dct = io_utils.read_file_mlflow(path)["registered_model"]
         # change for only importing specific runs of a model related to an experiment
         if experiment_name:
+            _exp_name = experiment_name.split('/')[-1]
+            _exp_name = _exp_name.strip().lower()
             l_versions = model_dct['versions']
-            l_res_versions = [x for x in l_versions if str(x[_experiment_name]).strip().lower() == experiment_name.strip().lower()]
+            l_res_versions = [x for x in l_versions if str(x[_experiment_name]).strip().lower() == _exp_name]
             if not l_res_versions:
                 raise Exception(f'No model version found for experiment :`{experiment_name}`')
             model_dct['versions'] = l_res_versions
