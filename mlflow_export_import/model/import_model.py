@@ -142,10 +142,17 @@ class BaseModelImporter():
             _exp_name = experiment_name.split('/')[-1]
             _exp_name = _exp_name.strip().lower()
             l_versions = model_dct['versions']
-            l_res_versions = [x for x in l_versions if str(x[_experiment_name]).strip().lower() == _exp_name]
+            l_res_versions = []
+            for x in l_versions:
+                version_experiment_name = x.get('_experiment_name','_NONE_')
+                version_experiment_name = version_experiment_name.strip().lower()
+                if version_experiment_name == _exp_name:
+                    l_res_versions.append(x)
+
             if not l_res_versions:
                 raise Exception(f'No model version found for experiment :`{experiment_name}`')
             model_dct['versions'] = l_res_versions
+
         _logger.info("Model to import:")
         _logger.info(f"  Name: {model_dct['name']}")
         _logger.info(f"  Description: {model_dct.get('description','')}")
