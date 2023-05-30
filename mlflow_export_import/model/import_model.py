@@ -138,7 +138,7 @@ class BaseModelImporter():
         path = os.path.join(input_dir, "model.json")
         model_dct = io_utils.read_file_mlflow(path)["registered_model"]
         # change for only importing specific runs of a model related to an experiment
-        if experiment_name:
+        if experiment_name and not experiment_name.strip().endswith('/'):
             _exp_name = experiment_name.split('/')[-1]
             _exp_name = _exp_name.strip().lower()
             l_versions = model_dct['versions']
@@ -224,7 +224,7 @@ class ModelImporter(BaseModelImporter):
         :return: Model import manifest.
         """
         model_dct = self._import_model(model_name, input_dir, delete_model, experiment_name)
-        mlflow.set_experiment(experiment_name)
+
         _logger.info("Importing versions:")
         for vr in model_dct["versions"]:
             try:
@@ -244,8 +244,16 @@ class ModelImporter(BaseModelImporter):
         current_stage = vr["current_stage"]
         run_artifact_uri = vr.get("_run_artifact_uri",None)
         run_dir = os.path.join(input_dir,run_id)
+        _experiment_name = vr.get("_experiment_name",None)
+        if not _experiment_name:
+            _experiment_name = experiment_name
+        elif experiment_name and experiment_name.strip().endswith("/"):
+            _experiment_name = experiment_name.strip()+_experiment_name
+        else:
+            _experiment_name = experiment_name
+        mlflow.set_experiment(_experiment_name)
         if not os.path.exists(run_dir):
-            msg = { "model": vr["name"], "version": vr["version"], "experiment": experiment_name, "run_id": run_id }
+            msg = { "model": vr["name"], "version": vr["version"], "experiment": _experiment_name, "run_id": run_id }
             _logger.warning(f"Cannot import model version because its run does not exist: {msg}")
             return None
         _logger.info(f"  Version {vr['version']}:")
@@ -259,7 +267,7 @@ class ModelImporter(BaseModelImporter):
 
         dst_run,_ = import_run(
             input_dir = run_dir,
-            experiment_name = experiment_name,
+            experiment_name = _experiment_name,
             import_source_tags = self.import_source_tags,
             mlflow_client = self.mlflow_client
         )
