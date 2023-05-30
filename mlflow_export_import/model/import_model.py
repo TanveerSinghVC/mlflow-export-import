@@ -3,6 +3,8 @@ Import a registered model and all the runs associated with each version.
 """
 
 import os
+import re
+
 import click
 
 import mlflow
@@ -281,6 +283,7 @@ class ModelImporter(BaseModelImporter):
         _logger.info( "    Destination run - imported run:")
         _logger.info(f"      run_id: {dst_run_id}")
         _logger.info(f"      run_artifact_uri: {run.info.artifact_uri}")
+
         source = _path_join(run.info.artifact_uri, model_artifact)
         _logger.info(f"      source:           {source}")
         return dst_run_id
@@ -369,13 +372,19 @@ def _extract_model_path(source, run_id):
     if idx == -1:
         raise MlflowExportImportException(f"Cannot find run ID '{run_id}' in registered model version source field '{source}'", http_status_code=404)
     model_path = source[1+idx+len(run_id):]
-    pattern = "artifacts"
-
-    idx = source.find(pattern)
-    if idx == -1: # Bizarre - sometimes there is no 'artifacts' after run_id
-        model_path = ""
+    _pattern = "artifacts"
+    _matches = re.search(rf'\b{_pattern}\b', source)
+    if _matches:
+        idx = _matches.end()
+        model_path = source[idx + 1:]
     else:
-        model_path = source[1+idx+len(pattern):]
+        model_path = ""
+
+    # idx = source.find(pattern)
+    # if idx == -1: # Bizarre - sometimes there is no 'artifacts' after run_id
+    #     model_path = ""
+    # else:
+    #     model_path = source[1+idx+len(pattern):]
     return model_path
 
 
