@@ -152,6 +152,11 @@ class BaseModelImporter():
             if not l_res_versions:
                 raise Exception(f'No model version found for experiment :`{experiment_name}`')
             model_dct['versions'] = l_res_versions
+        # sort model versions in model_dct by version_number
+        l_versions = model_dct.get('versions', None)
+        if l_versions:
+            l_sorted_versions = sorted(l_versions, key=lambda d: int(d['version']))
+            model_dct['versions'] = l_sorted_versions
 
         _logger.info("Model to import:")
         _logger.info(f"  Name: {model_dct['name']}")
